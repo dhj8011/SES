@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 연수생 자료 처리 SQL -->
+<mapper namespace="ses.dao.SesMapper">
+
+<!-- 연수생 등록 -->
+<insert id="insertTrainee" parameterType="Trainee">
+insert into Trainee(
+	id
+	,name
+	,age
+	,address
+	,major
+	,jlpt
+	,eip
+	,phone
+	,groupof
+)
+values (
+	#{id}
+	,#{name}
+	,#{age}
+	,#{address}
+	,#{major}
+	,#{jlpt}
+	,#{eip}
+	,#{phone}
+	,#{groupof}
+)
+
+</insert>
+
+<!-- 점수 레코드 생성 -->
+<insert id="insertMark" parameterType = "String">
+insert into Mark(
+	id
+)
+values(
+	#{id}
+)
+</insert>
+<!-- 반 배정 레코드 생성 -->
+<insert id="insertClass" parameterType = "String">
+insert into Class(
+	id
+)
+values(
+	#{id}
+)
+</insert>
+<!-- 조퇴/결석 레코드 생성 -->
+<insert id="insertManage" parameterType = "String">
+insert into Manage(
+	id
+)
+values(
+	#{id}
+)
+</insert>
+<!-- 연수생 조회 -->
+<select id="findTrainee" parameterType="map" resultType = "Trainee">
+select * from trainee t,mark m, manage a
+where
+	t.id = m.id
+	and t.id = a.id
+	and m.id = a.id
+	<if test="col == 1">
+	and t.id like '%'||#{find}||'%'
+	</if>
+	<if test="col == 2">
+	and t.name like '%'||#{find}||'%'
+	</if>
+	<if test="col == 3">
+	and t.major like '%'||#{find}||'%'
+	</if>
+	<if test="col == 4">
+	and t.age = #{find}
+	</if>
+	<if test="col == 5">
+	and t.address like '%'||#{find}||'%'
+	</if>
+	<if test="col == 6">
+	and t.phone like '%'||#{find}||'%'
+	</if>
+order by name
+</select>
+<!-- 전체 연수생 목록 -->
+<select id="showAll" resultType = "Trainee">
+select * from Trainee t, mark m, manage a,class c
+where t.id = m.id
+	and t.id = a.id
+	and a.id = m.id
+	and t.id = c.id
+	and t.groupof = #{groupof}
+order by name
+
+</select>
+
+<delete id="deleteTrainee" parameterType = "String">
+delete Trainee
+where id = #{id}
+
+</delete>
+
+<select id="loginID" parameterType = "String" resultType = "Professor">
+select *
+from Professor
+where id = #{id}
+
+
+</select>
+
+<select id="loginID2" parameterType = "String" resultType = "Trainee">
+select *
+from Trainee
+where id = #{id}
+
+
+</select>
+
+<update id = "updateTrainee" parameterType = "map">
+
+update mark
+<if test="col == 1">
+set firsttestIT = #{mark}
+</if>
+<if test="col == 2">
+set secondtestIT = #{mark}
+</if>
+<if test="col == 3">
+set thirdtestIT = #{mark}
+</if>
+<if test="col == 4">
+set firsttestJP = #{mark}
+</if>
+<if test="col == 5">
+set	secondtestJP = #{mark}
+</if>
+<if test="col == 6">
+set thirdtestJP = #{mark}
+</if>
+where 
+id = #{id}
+</update>
+
+<select id="getAvg" parameterType = "map" resultType = "double">
+select 
+<if test="col == 1">
+avg(firsttestit)
+</if>
+<if test="col == 2">
+avg(firsttestjp)
+</if>
+<if test="col == 3">
+avg(secondtestit)
+</if>
+<if test="col == 4">
+avg(secondtestjp)
+</if>
+<if test="col == 5">
+avg(thirdtestit)
+</if>
+<if test="col == 6">
+avg(thirdtestit)
+</if>
+from mark m,trainee t
+where t.id = m.id
+and t.groupof = #{groupof}
+
+
+</select>
+
+<insert id ="boardInsert" parameterType = "Board">
+insert into excuse(
+	boardNum
+	,id
+	,name
+	,content
+	,hits
+	,indate
+)
+values (
+	boardseq.nextval
+	,#{id}
+	,#{name}
+	,#{content}
+	,0
+	,sysdate
+)
+
+</insert>
+
+<select id="getExcuse" resultType ="int">
+select count(*) from excuse
+where hits = 0
+
+</select>
+
+<select id="getAllExcuse" resultType = "Board">
+select 
+	boardnum
+	,name
+	, to_char(indate,'mm'||'"월" '||'dd'||'"일"' ) indate
+	from excuse
+order by indate
+
+</select>
+
+<select id="showExcuse" parameterType="int" resultType = "Board">
+select * from excuse
+where boardnum = #{select}
+
+</select>
+
+<update id="absent" parameterType ="map">
+update manage
+<if test="col == 1">
+set leave = leave + 1
+</if>
+<if test="col == 2">
+set absent = absent + 1
+</if>
+<if test="col == 3">
+set late = late + 1
+</if>
+where id = #{id}
+
+</update>
+<update parameterType="int" id="updateExcuse"> 
+update excuse 
+set hit = hit+1 
+where boardnum = #{boardnum} 
+</update>
+<delete parameterType="int" id="deleteExcuse"> 
+delete board 
+where boardnum=#{boardnum} 
+</delete>
+
+<select id="getAmount" parameterType="int" resultType ="int">
+select count(*) from Trainee
+where groupof = #{groupof}
+</select>
+
+<update id="updateClass" parameterType="Trainee">
+update class
+set itcls = #{itCls}
+where id = #{id}
+
+</update>
+
+<insert id = "insertNotice" parameterType = "String">
+insert into notice(
+noticenum
+,content
+)
+values(
+boardseq.nextval
+,#{content}
+)
+</insert>
+
+<delete id="deleteNotice" parameterType = "int">
+delete notice
+where noticenum=#{noticeNum}
+</delete>
+
+<select id="showNotice" resultType="Notice">
+select * from notice
+order by noticeNum
+
+</select>
+
+
+</mapper>
